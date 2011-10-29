@@ -487,7 +487,7 @@ public class ContactManager extends ContactFactory {
 	public int update(IContact contact, IContact oldContact) {
 		int uCount = 0;
 
-		if (oldContact == null) 
+		if (oldContact == null)
 			return uCount;
 
 		long contactId = Long.valueOf(contact.getId());
@@ -510,7 +510,7 @@ public class ContactManager extends ContactFactory {
 				values.put(Contacts.STARRED, contact.isStarred() ? 1 : 0);
 
 			if (values.size() > 0)
-				uCount = contentResolver.update(uri, values, null, null); 
+				uCount = contentResolver.update(uri, values, null, null);
 		}
 		long raw_id = 0;
 		if (contact.getRawId() != null)
@@ -524,7 +524,7 @@ public class ContactManager extends ContactFactory {
 		}
 		/* update the contact name information */
 		if (!contactName.hasName(contact)) {
-			contactName.delete(raw_id, contact); 
+			contactName.delete(raw_id, contact);
 		} else if (!contactName.compareName(contact, oldContact)) {
 			uCount = contactName.update(raw_id, contact, oldContact, values);
 
@@ -578,125 +578,112 @@ public class ContactManager extends ContactFactory {
 	@Override
 	public List<Uri> insert(final IContact[] contacts) {
 		final List<Uri> uris = new ArrayList<Uri>();
-		//it cost 106s to run this ok
-		Thread t = new Thread() {
-			public void run() {
-				for (IContact contact : contacts) {
-					ContentValues values = new ContentValues();
-					/* the aggreation mode */
-					values.put(RawContacts.AGGREGATION_MODE,
-							RawContacts.AGGREGATION_MODE_DISABLED);
-					// if (inCount > 80) {
-					// inCount = 0;
-					// try {
-					// contentResolver.applyBatch(ContactsContract.AUTHORITY,
-					// ops);
-					// ops.clear();
-					// } catch (RemoteException e) {
-					// e.printStackTrace();
-					// } catch (OperationApplicationException e) {
-					// e.printStackTrace();
-					// }
-					// } else {
-					/**
-					 * add the batch operation now add the insert handle
-					 */
-					// ContentProviderOperation emptyInsert =
-					// ContentProviderOperation
-					// .newInsert(RawContacts.CONTENT_URI).withValues(values)
-					// .build();
-					Uri rawContactUri = contentResolver.insert(
-							RawContacts.CONTENT_URI, values);
-					// Uri rawContactUri = emptyInsert.getUri();
-					/**
-					 * add the batch operation now add the insert handle
-					 */
-					// ops.add(emptyInsert);
+		// it cost 106s to run this ok
+		for (IContact contact : contacts) {
+			ContentValues values = new ContentValues();
+			/* the aggreation mode */
+			values.put(RawContacts.AGGREGATION_MODE,
+					RawContacts.AGGREGATION_MODE_DISABLED);
+			// if (inCount > 80) {
+			// inCount = 0;
+			// try {
+			// contentResolver.applyBatch(ContactsContract.AUTHORITY,
+			// ops);
+			// ops.clear();
+			// } catch (RemoteException e) {
+			// e.printStackTrace();
+			// } catch (OperationApplicationException e) {
+			// e.printStackTrace();
+			// }
+			// } else {
+			/**
+			 * add the batch operation now add the insert handle
+			 */
+			// ContentProviderOperation emptyInsert =
+			// ContentProviderOperation
+			// .newInsert(RawContacts.CONTENT_URI).withValues(values)
+			// .build();
+			Uri rawContactUri = contentResolver.insert(RawContacts.CONTENT_URI,
+					values);
+			// Uri rawContactUri = emptyInsert.getUri();
+			/**
+			 * add the batch operation now add the insert handle
+			 */
+			// ops.add(emptyInsert);
 
-					long rawContactId = ContentUris.parseId(rawContactUri);
-					contact.setRawId(String.valueOf(rawContactId));
+			long rawContactId = ContentUris.parseId(rawContactUri);
+			contact.setRawId(String.valueOf(rawContactId));
 
-					String contactId = transferContactId(rawContactId);
-					Uri contactUri = ContentUris.withAppendedId(
-							Contacts.CONTENT_URI, Long.parseLong(contactId));
-					/**
-					 * add the detail contact url to the uris
-					 */
-					uris.add(contactUri);
-					contact.setId(contactId);
+			String contactId = transferContactId(rawContactId);
+			Uri contactUri = ContentUris.withAppendedId(Contacts.CONTENT_URI,
+					Long.parseLong(contactId));
+			/**
+			 * add the detail contact url to the uris
+			 */
+			uris.add(contactUri);
+			contact.setId(contactId);
 
-					registerHeadUri(contact);
+			registerHeadUri(contact);
 
-					// get the ringtone uri
-					String ringUri = getRingtoneUri(contact.getRingtoneId(),
-							contact.isSysRingtone());
-					if (ringUri != null)
-						values.put(Contacts.CUSTOM_RINGTONE, ringUri);
+			// get the ringtone uri
+			String ringUri = getRingtoneUri(contact.getRingtoneId(),
+					contact.isSysRingtone());
+			if (ringUri != null)
+				values.put(Contacts.CUSTOM_RINGTONE, ringUri);
 
-					// is starred mark
-					values.put(Contacts.STARRED, contact.isStarred() ? 1 : 0);
+			// is starred mark
+			values.put(Contacts.STARRED, contact.isStarred() ? 1 : 0);
 
-					// ops.add(ContentProviderOperation.newUpdate(contactUri)
-					// .withValues(values).build());
-					contentResolver.update(contactUri, values, null, null);
+			// ops.add(ContentProviderOperation.newUpdate(contactUri)
+			// .withValues(values).build());
+			contentResolver.update(contactUri, values, null, null);
 
-					// insert data to tables
-					contactName.insert(rawContactId, contact, values);
+			// insert data to tables
+			contactName.insert(rawContactId, contact, values);
 
-					// add the phone number
-					Item[] numberItem = contact.getNumbers();
-					contactNumber.insert(rawContactId, numberItem, values);
+			// add the phone number
+			Item[] numberItem = contact.getNumbers();
+			contactNumber.insert(rawContactId, numberItem, values);
 
-					// add emails
-					Item[] emailItem = contact.getEmails();
-					contactEmail.insert(rawContactId, emailItem, values);
+			// add emails
+			Item[] emailItem = contact.getEmails();
+			contactEmail.insert(rawContactId, emailItem, values);
 
-					// add the communication message
-					Item[] imItem = contact.getIMs();
-					contactIm.insert(rawContactId, imItem, values);
+			// add the communication message
+			Item[] imItem = contact.getIMs();
+			contactIm.insert(rawContactId, imItem, values);
 
-					// add addresss message
-					IAddress[] addressItem = contact.getAddresses();
-					contactAddress.insert(rawContactId, addressItem, values);
+			// add addresss message
+			IAddress[] addressItem = contact.getAddresses();
+			contactAddress.insert(rawContactId, addressItem, values);
 
-					// add the oragization group information
-					IOrganization[] organizationItem = contact
-							.getOrganizations();
-					contactOrganization.insert(rawContactId, organizationItem,
-							values);
+			// add the oragization group information
+			IOrganization[] organizationItem = contact.getOrganizations();
+			contactOrganization.insert(rawContactId, organizationItem, values);
 
-					// the note information
-					Item[] noteItem = contact.getNotes();
-					contactNote.insert(rawContactId, noteItem, values);
+			// the note information
+			Item[] noteItem = contact.getNotes();
+			contactNote.insert(rawContactId, noteItem, values);
 
-					// add the name information
-					Item[] nickNameItem = contact.getNickNames();
-					contactNickname.insert(rawContactId, nickNameItem, values);
+			// add the name information
+			Item[] nickNameItem = contact.getNickNames();
+			contactNickname.insert(rawContactId, nickNameItem, values);
 
-					// website information
-					Item[] websitesItem = contact.getWebsites();
-					contactWebsite.insert(rawContactId, websitesItem, values);
+			// website information
+			Item[] websitesItem = contact.getWebsites();
+			contactWebsite.insert(rawContactId, websitesItem, values);
 
-					Item[] groupItem = contact.getGroupId();
-					contactGroup.insert(rawContactId, groupItem, values);
+			Item[] groupItem = contact.getGroupId();
+			contactGroup.insert(rawContactId, groupItem, values);
 
-					/* htc have the event columns */
-					Item[] eventItems = contact.getEvent();
-					contactEvent.insert(rawContactId, eventItems, values);
+			/* htc have the event columns */
+			Item[] eventItems = contact.getEvent();
+			contactEvent.insert(rawContactId, eventItems, values);
 
-					if (contactSipAddress != null) {
-						Item[] sipItems = contact.getSipAddresses();
-						contactSipAddress
-								.insert(rawContactId, sipItems, values);
-					}
-				}
+			if (contactSipAddress != null) {
+				Item[] sipItems = contact.getSipAddresses();
+				contactSipAddress.insert(rawContactId, sipItems, values);
 			}
-		};
-		t.start();
-		try {
-			t.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		}
 		return (uris);
 	}
