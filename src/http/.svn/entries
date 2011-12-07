@@ -1,47 +1,0 @@
-9
-
-dir
-4
-svn://www.oksvn.com/AndroidServer/AndroidWebServer/src/com/wondershare/http
-svn://www.oksvn.com/AndroidServer
-
-
-
-2011-07-18T07:24:20.343750Z
-3
-hong4a113
-
-
-svn:special svn:externals svn:needs-lock
-
-
-
-
-
-
-
-
-
-
-
-956befed-f964-a14f-9f8b-a150a4f3153c
-
-
-
-
-
-
-0
-
-android
-dir
-
-cmd
-dir
-
-server
-dir
-
-core
-dir
-
